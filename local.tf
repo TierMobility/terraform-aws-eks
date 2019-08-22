@@ -10,6 +10,7 @@ locals {
   kubeconfig_name     = var.kubeconfig_name == "" ? "eks_${var.cluster_name}" : var.kubeconfig_name
 
   worker_group_count                       = length(var.worker_groups)
+  worker_group_mapped_count                = length(var.worker_groups_map)
   worker_group_launch_template_count       = length(var.worker_groups_launch_template)
   worker_group_launch_template_mixed_count = length(var.worker_groups_launch_template_mixed)
 

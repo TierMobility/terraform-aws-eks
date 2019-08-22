@@ -122,7 +122,7 @@ module "eks" {
   }
 
   vpc_id = module.vpc.vpc_id
-
+/*
   worker_groups = [
     {
       name                          = "worker-group-1"
@@ -139,6 +139,31 @@ module "eks" {
       asg_desired_capacity          = 1
     },
   ]
+*/
+  worker_groups_map = {
+    test1 = {
+      name                          = "worker-group-1"
+      instance_type                 = "t2.small"
+      additional_userdata           = "echo foo bar"
+      asg_desired_capacity          = 2
+      additional_security_group_ids = [aws_security_group.worker_group_mgmt_one.id]
+    },
+
+    test2 = {
+      name                          = "worker-group-2"
+      instance_type                 = "t2.medium"
+      additional_userdata           = "echo foo bar"
+      additional_security_group_ids = [aws_security_group.worker_group_mgmt_two.id]
+      asg_desired_capacity          = 1
+    },
+    test3 = {
+      name                          = "worker-group-3"
+      instance_type                 = "t2.micro"
+      additional_userdata           = "echo foo bar blah"
+      additional_security_group_ids = [aws_security_group.worker_group_mgmt_two.id]
+      asg_desired_capacity          = 1
+    },
+  }
 
   worker_additional_security_group_ids = [aws_security_group.all_worker_mgmt.id]
   map_roles                            = var.map_roles
