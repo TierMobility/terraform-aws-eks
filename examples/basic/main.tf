@@ -89,7 +89,7 @@ module "vpc" {
   name                 = "test-vpc"
   cidr                 = "10.0.0.0/16"
   azs                  = data.aws_availability_zones.available.names
-  private_subnets      = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  private_subnets      = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24", "10.0.7.0/24", "10.0.8.0/24"]
   public_subnets       = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
   enable_nat_gateway   = true
   single_nat_gateway   = true
@@ -145,6 +145,7 @@ module "eks" {
       name                          = "worker-group-1"
       instance_type                 = "t2.small"
       additional_userdata           = "echo foo bar"
+      subnets                       = [module.vpc.private_subnets[0],module.vpc.private_subnets[1]]
       asg_desired_capacity          = 2
       additional_security_group_ids = [aws_security_group.worker_group_mgmt_one.id]
     },
@@ -153,6 +154,7 @@ module "eks" {
       name                          = "worker-group-2"
       instance_type                 = "t2.medium"
       additional_userdata           = "echo foo bar"
+      subnets                       = [module.vpc.private_subnets[2]]
       additional_security_group_ids = [aws_security_group.worker_group_mgmt_two.id]
       asg_desired_capacity          = 1
     },
@@ -160,6 +162,7 @@ module "eks" {
       name                          = "worker-group-3"
       instance_type                 = "t2.micro"
       additional_userdata           = "echo foo bar blah"
+      subnets                       = [module.vpc.private_subnets[3],module.vpc.private_subnets[4]]
       additional_security_group_ids = [aws_security_group.worker_group_mgmt_two.id]
       asg_desired_capacity          = 1
     },
