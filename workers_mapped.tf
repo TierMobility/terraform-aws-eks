@@ -295,10 +295,10 @@ resource "aws_iam_role" "workers_mapped" {
 
 
 resource "aws_iam_instance_profile" "workers_mapped" {
-  for_each    = var.manage_worker_iam_resources ? var.worker_groups_map : {}
+  for_each    = var.manage_worker_iam_resources ? toset(keys(var.worker_groups_map)) : toset([])
   name_prefix = aws_eks_cluster.this.name
   role = lookup(
-    each.value,
+    var.worker_groups_map[each.value],
     "iam_role_id",
     local.workers_group_defaults["iam_role_id"],
   )
