@@ -2,7 +2,7 @@
 
 resource "aws_autoscaling_group" "workers_launch_template_mixed" {
   count = local.worker_group_launch_template_mixed_count
-  name_prefix = join(
+  name_prefix = "${join(
     "-",
     compact(
       [
@@ -11,7 +11,7 @@ resource "aws_autoscaling_group" "workers_launch_template_mixed" {
         lookup(var.worker_groups_launch_template_mixed[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers_launch_template_mixed[count.index].id : ""
       ]
     )
-  )
+  )}-"
 
   desired_capacity = lookup(
     var.worker_groups_launch_template_mixed[count.index],
@@ -206,7 +206,7 @@ resource "aws_launch_template" "workers_launch_template_mixed" {
     var.worker_groups_launch_template_mixed[count.index],
     "name",
     count.index,
-  )}"
+  )}-"
 
   network_interfaces {
     associate_public_ip_address = lookup(

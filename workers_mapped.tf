@@ -1,6 +1,6 @@
 resource "aws_autoscaling_group" "workers_mapped" {
   for_each    = var.worker_groups_map
-  name_prefix = "${aws_eks_cluster.this.name}-${lookup(each.value, "name", each.key)}"
+  name_prefix = "${aws_eks_cluster.this.name}-${lookup(each.value, "name", each.key)}-"
   desired_capacity = lookup(
     each.value,
     "asg_desired_capacity",
@@ -121,7 +121,7 @@ resource "aws_autoscaling_group" "workers_mapped" {
 
 resource "aws_launch_configuration" "workers_mapped" {
   for_each = var.worker_groups_map
-  name_prefix = "${aws_eks_cluster.this.name}-${var.worker_groups_map[each.key].name}"
+  name_prefix = "${aws_eks_cluster.this.name}-${var.worker_groups_map[each.key].name}-"
   associate_public_ip_address = lookup(
     each.value,
     "public_ip",

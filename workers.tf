@@ -2,7 +2,7 @@
 
 resource "aws_autoscaling_group" "workers" {
   count = local.worker_group_count
-  name_prefix = join(
+  name_prefix = "${join(
     "-",
     compact(
       [
@@ -11,7 +11,7 @@ resource "aws_autoscaling_group" "workers" {
         lookup(var.worker_groups[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers[count.index].id : ""
       ]
     )
-  )
+  )}-"
   desired_capacity = lookup(
     var.worker_groups[count.index],
     "asg_desired_capacity",
@@ -144,7 +144,7 @@ resource "aws_autoscaling_group" "workers" {
 
 resource "aws_launch_configuration" "workers" {
   count       = local.worker_group_count
-  name_prefix = "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
+  name_prefix = "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}-"
   associate_public_ip_address = lookup(
     var.worker_groups[count.index],
     "public_ip",
