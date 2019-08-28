@@ -225,6 +225,7 @@ resource "aws_launch_configuration" "workers" {
       local.workers_group_defaults["root_iops"],
     )
     delete_on_termination = true
+    encrypted = true
   }
 
   lifecycle {
