@@ -121,7 +121,7 @@ resource "aws_autoscaling_group" "workers_mapped" {
 
 resource "aws_launch_configuration" "workers_mapped" {
   for_each = var.worker_groups_map
-  name     = "${aws_eks_cluster.this.name}-${each.key}"
+  name_prefix = "${aws_eks_cluster.this.name}-${each.key}"
   associate_public_ip_address = lookup(
     each.value,
     "public_ip",
