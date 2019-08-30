@@ -136,15 +136,10 @@ resource "aws_launch_configuration" "workers_mapped" {
       local.workers_group_defaults["additional_security_group_ids"]
     )
   ])
-  iam_instance_profile = lookup(
-    each.value,
-    "iam_instance_profile_name",
-    local.workers_group_defaults["iam_instance_profile_name"],
-  )
- # iam_instance_profile = coalescelist(
- #   aws_iam_instance_profile.workers_mapped[each.key].id,
- #   data.aws_iam_instance_profile.custom_worker_group_iam_instance_profile.*.name,
- # )[0]
+  iam_instance_profile = compact([
+    lookup(each.value, "iam_instance_profile_name", local.workers_group_defaults["iam_instance_profile_name"]),
+    aws_iam_instance_profile.workers_mapped[each.key].name,
+  ])[0]
   image_id = lookup(
     each.value,
     "ami_id",
