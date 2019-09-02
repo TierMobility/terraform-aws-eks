@@ -97,10 +97,10 @@ data "template_file" "workers_mapped_role_arns" {
     worker_role_name = compact([
       lookup(
         var.worker_groups_map[keys(var.worker_groups_map)[count.index]],
-        "iam_instance_profile_name",
-        local.workers_group_defaults["iam_instance_profile_name"]
+        "iam_role_id",
+        local.workers_group_defaults["iam_role_id"]
       ),
-      aws_iam_instance_profile.workers_mapped[keys(var.worker_groups_map)[count.index]].name,
+      aws_iam_instance_profile.workers_mapped[keys(var.worker_groups_map)[count.index]].role,
     ])[0]
   }
 }
