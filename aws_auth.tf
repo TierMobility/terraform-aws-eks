@@ -81,6 +81,30 @@ data "template_file" "worker_role_arns" {
   }
 }
 
+data "template_file" "workers_mapped_role_arns" {
+  # for the aws-auth configmap, we need the generated or passed in roles to be added.
+  # the below sets up a template with the following logic:
+  # -> create a template for each entry in the worker_group_map
+  # -> check if there was a provided role name or a global provided role name
+  # -> check if there was a role created internally
+  # -> to do these checks, we have to use lookups() via keys() as we are mixing count and maps
+  count = local.worker_group_mapped_count > 0 ? local.worker_group_mapped_count : 0
+
+  template = file("${path.module}/templates/worker_mapped-role.tpl")
+
+  vars = {
+    arn_skeleton = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role"
+    worker_role_name = compact([
+      lookup(
+        var.worker_groups_map[keys(var.worker_groups_map)[count.index]],
+        "iam_instance_profile_name",
+        local.workers_group_defaults["iam_instance_profile_name"]
+      ),
+      aws_iam_instance_profile.workers_mapped[keys(var.worker_groups_map)[count.index]].name,
+    ])[0]
+  }
+}
+
 data "template_file" "config_map_aws_auth" {
   template = file("${path.module}/templates/config-map-aws-auth.yaml.tpl")
 
@@ -91,6 +115,7 @@ data "template_file" "config_map_aws_auth" {
         concat(
           data.template_file.launch_template_worker_role_arns.*.rendered,
           data.template_file.worker_role_arns.*.rendered,
+          data.template_file.workers_mapped_role_arns.*.rendered,
           data.template_file.launch_template_mixed_worker_role_arns.*.rendered,
         ),
       ),
