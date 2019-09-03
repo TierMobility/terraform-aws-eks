@@ -140,11 +140,11 @@ resource "aws_launch_configuration" "workers_mapped" {
     lookup(each.value, "iam_instance_profile_name", local.workers_group_defaults["iam_instance_profile_name"]),
     aws_iam_instance_profile.workers_mapped[each.key].name,
   ])[0]
-  image_id = lookup(
-    each.value,
-    "ami_id",
-    local.workers_group_defaults["ami_id"],
-  )
+  # the ami_id passed in from the calling stack is (in our case) emtpy, sop we have to strip that empty string out with compact()
+  image_id = compact(
+    [ lookup( each.value, "ami_id", "" ),
+      local.workers_group_defaults["ami_id"] ]
+  )[0]
   instance_type = lookup(
     each.value,
     "instance_type",
