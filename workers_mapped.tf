@@ -321,6 +321,14 @@ resource "aws_iam_role_policy_attachment" "workers_AmazonEC2ContainerRegistryRea
   role       = aws_iam_role.workers_mapped[0].name
 }
 
+# --- add SSM policies to the worker IAM role --------------------------
+# allow management by SSM
+resource "aws_iam_role_policy_attachment" "worker_role_attach_AmazonSSMManagedInstanceCore" {
+  count      = var.manage_worker_iam_resources ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  role       = aws_iam_role.workers_mapped[0].name
+}
+
 resource "aws_iam_role_policy_attachment" "workers_additional_policies_mapped" {
   count      = var.manage_worker_iam_resources ? length(var.workers_additional_policies) : 0
   role       = aws_iam_role.workers_mapped[0].name
