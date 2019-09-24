@@ -83,7 +83,7 @@ data "template_file" "workers_mapped_role_arns" {
       lookup(
         var.worker_groups_map[keys(var.worker_groups_map)[count.index]],
         "iam_role_id",
-        local.workers_group_defaults["iam_role_id"]
+        local.default_iam_role_id
       ),
       aws_iam_instance_profile.workers_mapped[keys(var.worker_groups_map)[count.index]].role,
     ])[0]
