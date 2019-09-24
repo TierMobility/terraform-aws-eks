@@ -48,15 +48,10 @@ module "my-cluster" {
 
 ## Other documentation
 
-- [Autoscaling](docs/autoscaling.md): How to enable worker node autoscaling.
-- [Enable Docker Bridge Network](docs/enable-docker-bridge-network.md): How to enable the docker bridge network when using the EKS-optimized AMI, which disables it by default.
-- [Spot instances](docs/spot-instances.md): How to use spot instances with this module.
-
-## Release schedule
-
-Generally the maintainers will try to release the module once every 2 weeks to
-keep up with PR additions. If particularly pressing changes are added or maintainers
-come up with the spare time (hah!), release may happen more often on occasion.
+* [Autoscaling](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/autoscaling.md): How to enable worker node autoscaling.
+* [Enable Docker Bridge Network](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/enable-docker-bridge-network.md): How to enable the docker bridge network when using the EKS-optimized AMI, which disables it by default.
+* [Spot instances](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/spot-instances.md): How to use spot instances with this module.
+* [IAM Permissions](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/iam-permissions.md): Minimum IAM permissions needed to setup EKS Cluster.
 
 ## Testing
 
@@ -100,7 +95,8 @@ The [changelog](https://github.com/terraform-aws-modules/terraform-aws-eks/tree/
 
 ## Authors
 
-Created and maintained by [Brandon O'Connor](https://github.com/brandoconnor) - brandon@atscale.run.
+Created by [Brandon O'Connor](https://github.com/brandoconnor) - brandon@atscale.run.
+Maintained by [Max Williams](https://github.com/max-rocket-internet)
 Many thanks to [the contributors listed here](https://github.com/terraform-aws-modules/terraform-aws-eks/graphs/contributors)!
 
 ## License
@@ -123,7 +119,7 @@ MIT Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-a
 | cluster\_log\_retention\_in\_days | Number of days to retain log events. Default retention - 90 days. | number | `"90"` | no |
 | cluster\_name | Name of the EKS cluster. Also used as a prefix in names of related resources. | string | n/a | yes |
 | cluster\_security\_group\_id | If provided, the EKS cluster will be attached to this security group. If not given, a security group will be created with necessary ingres/egress to work with the workers | string | `""` | no |
-| cluster\_version | Kubernetes version to use for the EKS cluster. | string | `"1.13"` | no |
+| cluster\_version | Kubernetes version to use for the EKS cluster. | string | `"1.14"` | no |
 | config\_output\_path | Where to save the Kubectl config file (if `write_kubeconfig = true`). Should end in a forward slash `/` . | string | `"./"` | no |
 | iam\_path | If provided, all IAM roles will be created on this path. | string | `"/"` | no |
 | kubeconfig\_aws\_authenticator\_additional\_args | Any additional arguments to pass to the authenticator such as the role to assume. e.g. ["-r", "MyEksRole"]. | list(string) | `[]` | no |
@@ -136,8 +132,8 @@ MIT Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-a
 | manage\_cluster\_iam\_resources | Whether to let the module manage cluster IAM resources. If set to false, cluster_iam_role_name must be specified. | bool | `"true"` | no |
 | manage\_worker\_iam\_resources | Whether to let the module manage worker IAM resources. If set to false, iam_instance_profile_name must be specified for workers. | bool | `"true"` | no |
 | map\_accounts | Additional AWS account numbers to add to the aws-auth configmap. See examples/basic/variables.tf for example format. | list(string) | `[]` | no |
-| map\_roles | Additional IAM roles to add to the aws-auth configmap. See examples/basic/variables.tf for example format. | list(map(string)) | `[]` | no |
-| map\_users | Additional IAM users to add to the aws-auth configmap. See examples/basic/variables.tf for example format. | list(map(string)) | `[]` | no |
+| map\_roles | Additional IAM roles to add to the aws-auth configmap. See examples/basic/variables.tf for example format. | object | `[]` | no |
+| map\_users | Additional IAM users to add to the aws-auth configmap. See examples/basic/variables.tf for example format. | object | `[]` | no |
 | permissions\_boundary | If provided, all IAM roles will be created with this permissions boundary attached. | string | `""` | no |
 | subnets | A list of subnets to place the EKS cluster and workers within. | list(string) | n/a | yes |
 | tags | A map of tags to add to all resources. | map(string) | `{}` | no |
@@ -147,11 +143,11 @@ MIT Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-a
 | worker\_create\_security\_group | Whether to create a security group for the workers or attach the workers to `worker_security_group_id`. | bool | `"true"` | no |
 | worker\_groups | A list of maps defining worker group configurations to be defined using AWS Launch Configurations. See workers_group_defaults for valid keys. | any | `[]` | no |
 | worker\_groups\_launch\_template | A list of maps defining worker group configurations to be defined using AWS Launch Templates. See workers_group_defaults for valid keys. | any | `[]` | no |
-| worker\_groups\_launch\_template\_mixed | A list of maps defining worker group configurations to be defined using AWS Launch Templates. See workers_group_defaults for valid keys. | any | `[]` | no |
 | worker\_security\_group\_id | If provided, all workers will be attached to this security group. If not given, a security group will be created with necessary ingres/egress to work with the EKS cluster. | string | `""` | no |
 | worker\_sg\_ingress\_from\_port | Minimum port number from which pods will accept communication. Must be changed to a lower value if some pods in your cluster will expose a port lower than 1025 (e.g. 22, 80, or 443). | number | `"1025"` | no |
 | workers\_additional\_policies | Additional policies to be added to workers | list(string) | `[]` | no |
 | workers\_group\_defaults | Override default values for target groups. See workers_group_defaults_defaults in local.tf for valid keys. | any | `{}` | no |
+| workers\_role\_name | User defined workers role name. | string | `""` | no |
 | write\_aws\_auth\_config | Whether to write the aws-auth configmap file. | bool | `"true"` | no |
 | write\_kubeconfig | Whether to write a Kubectl config file containing the cluster configuration. Saved to `config_output_path`. | bool | `"true"` | no |
 
@@ -166,6 +162,7 @@ MIT Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-a
 | cluster\_iam\_role\_arn | IAM role ARN of the EKS cluster. |
 | cluster\_iam\_role\_name | IAM role name of the EKS cluster. |
 | cluster\_id | The name/id of the EKS cluster. |
+| cluster\_oidc\_issuer\_url | The URL on the EKS cluster OIDC Issuer |
 | cluster\_security\_group\_id | Security group ID attached to the EKS cluster. |
 | cluster\_version | The Kubernetes server version for the EKS cluster. |
 | config\_map\_aws\_auth | A kubernetes configuration to authenticate to this EKS cluster. |

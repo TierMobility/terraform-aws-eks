@@ -240,15 +240,7 @@ resource "random_pet" "workers" {
   length    = 2
 
   keepers = {
-    lt_name = join(
-      "-",
-      compact(
-        [
-          aws_launch_configuration.workers[count.index].name,
-          aws_launch_configuration.workers[count.index].latest_version
-        ]
-      )
-    )
+    lc_name = aws_launch_configuration.workers[count.index].name
   }
 }
 
@@ -323,7 +315,8 @@ resource "aws_security_group_rule" "workers_ingress_cluster_https" {
 
 resource "aws_iam_role" "workers" {
   count                 = var.manage_worker_iam_resources ? 1 : 0
-  name_prefix           = aws_eks_cluster.this.name
+  name_prefix           = var.workers_role_name != "" ? null : aws_eks_cluster.this.name
+  name                  = var.workers_role_name != "" ? var.workers_role_name : null
   assume_role_policy    = data.aws_iam_policy_document.workers_assume_role_policy.json
   permissions_boundary  = var.permissions_boundary
   path                  = var.iam_path
@@ -337,7 +330,7 @@ resource "aws_iam_instance_profile" "workers" {
   role = lookup(
     var.worker_groups[count.index],
     "iam_role_id",
-    local.workers_group_defaults["iam_role_id"],
+    local.default_iam_role_id,
   )
 
   path = var.iam_path
@@ -365,16 +358,6 @@ resource "aws_iam_role_policy_attachment" "workers_additional_policies" {
   count      = var.manage_worker_iam_resources ? length(var.workers_additional_policies) : 0
   role       = aws_iam_role.workers[0].name
   policy_arn = var.workers_additional_policies[count.index]
-}
-
-resource "null_resource" "tags_as_list_of_maps" {
-  count = length(keys(var.tags))
-
-  triggers = {
-    key                 = keys(var.tags)[count.index]
-    value               = values(var.tags)[count.index]
-    propagate_at_launch = "true"
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "workers_autoscaling" {

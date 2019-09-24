@@ -43,6 +43,11 @@ output "cluster_iam_role_arn" {
   value       = local.cluster_iam_role_arn
 }
 
+output "cluster_oidc_issuer_url" {
+  description = "The URL on the EKS cluster OIDC Issuer"
+  value       = aws_eks_cluster.this.identity.0.oidc.0.issuer
+}
+
 output "cloudwatch_log_group_name" {
   description = "Name of cloudwatch log group created"
   value       = aws_cloudwatch_log_group.this.*.name
@@ -63,7 +68,6 @@ output "workers_asg_arns" {
   value = concat(
     aws_autoscaling_group.workers.*.arn,
     aws_autoscaling_group.workers_launch_template.*.arn,
-    aws_autoscaling_group.workers_launch_template_mixed.*.arn,
   )
 }
 
@@ -72,7 +76,6 @@ output "workers_asg_names" {
   value = concat(
     aws_autoscaling_group.workers.*.id,
     aws_autoscaling_group.workers_launch_template.*.id,
-    aws_autoscaling_group.workers_launch_template_mixed.*.id,
   )
 }
 
@@ -125,7 +128,6 @@ output "worker_iam_role_name" {
     aws_iam_role.workers.*.name,
     data.aws_iam_instance_profile.custom_worker_group_iam_instance_profile.*.role_name,
     data.aws_iam_instance_profile.custom_worker_group_launch_template_iam_instance_profile.*.role_name,
-    data.aws_iam_instance_profile.custom_worker_group_launch_template_mixed_iam_instance_profile.*.role_name,
     [""]
   )[0]
 }
@@ -136,7 +138,6 @@ output "worker_iam_role_arn" {
     aws_iam_role.workers.*.arn,
     data.aws_iam_instance_profile.custom_worker_group_iam_instance_profile.*.role_arn,
     data.aws_iam_instance_profile.custom_worker_group_launch_template_iam_instance_profile.*.role_arn,
-    data.aws_iam_instance_profile.custom_worker_group_launch_template_mixed_iam_instance_profile.*.role_arn,
     [""]
   )[0]
 }

@@ -3,7 +3,7 @@ terraform {
 }
 
 provider "aws" {
-  version = ">= 2.11"
+  version = ">= 2.28.1"
   region  = var.region
 }
 
@@ -56,7 +56,7 @@ module "eks" {
   subnets      = module.vpc.public_subnets
   vpc_id       = module.vpc.vpc_id
 
-  worker_groups_launch_template_mixed = [
+  worker_groups_launch_template = [
     {
       name                    = "spot-1"
       override_instance_types = ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
