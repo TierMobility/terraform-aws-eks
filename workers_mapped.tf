@@ -296,7 +296,7 @@ resource "aws_iam_instance_profile" "workers_mapped" {
   role = lookup(
     var.worker_groups_map[each.value],
     "iam_role_id",
-    local.workers_group_defaults["iam_role_id"],
+    local.default_iam_role_id,
   )
 
   path = var.iam_path
