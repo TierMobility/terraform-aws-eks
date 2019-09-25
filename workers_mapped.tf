@@ -348,7 +348,7 @@ resource "null_resource" "tags_as_list_of_maps_mapped" {
 resource "aws_iam_role_policy_attachment" "workers_autoscaling_mapped" {
   count      = var.manage_worker_iam_resources ? 1 : 0
   policy_arn = aws_iam_policy.worker_autoscaling[0].arn
-  role       = aws_iam_role.workers[0].name
+  role       = aws_iam_role.workers_mapped[0].name
 }
 
 resource "aws_iam_policy" "worker_autoscaling_mapped" {
