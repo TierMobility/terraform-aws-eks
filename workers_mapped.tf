@@ -201,8 +201,12 @@ resource "aws_launch_configuration" "workers_mapped" {
       "root_iops",
       local.workers_group_defaults["root_iops"],
     )
+    encrypted = lookup(
+        each.value,
+        "root_encrypted",
+        local.workers_group_defaults["root_encrypted"],
+      )
     delete_on_termination = true
-    encrypted = true
   }
 
   lifecycle {
