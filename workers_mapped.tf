@@ -202,7 +202,7 @@ resource "aws_launch_configuration" "workers_mapped" {
       local.workers_group_defaults["root_iops"],
     )
     encrypted = lookup(
-        var.worker_groups_launch_template[count.index],
+        each.value,
         "root_encrypted",
         local.workers_group_defaults["root_encrypted"],
       )
