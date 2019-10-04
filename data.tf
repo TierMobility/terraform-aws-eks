@@ -16,16 +16,17 @@ data "aws_iam_policy_document" "workers_assume_role_policy" {
   }
 }
 
+data "aws_ssm_parameter" "eks_worker" {
+  name = "/aws/service/eks/optimized-ami/${var.cluster_version}/amazon-linux-2/recommended"
+}
+
 data "aws_ami" "eks_worker" {
   filter {
-    name   = "name"
-    values = ["amazon-eks-node-${var.cluster_version}-${var.worker_ami_name_filter}"]
+    name   = "image-id"
+    values = [jsondecode(data.aws_ssm_parameter.eks_worker.value)["image_id"]]
   }
-
   most_recent = true
-
-  # Owner ID of AWS EKS team
-  owners = ["amazon"]
+  owners      = ["amazon"]
 }
 
 data "aws_iam_policy_document" "cluster_assume_role_policy" {
@@ -117,7 +118,7 @@ data "template_file" "userdata" {
 }
 
 data "template_file" "userdata_mapped" {
-  for_each    = var.worker_groups_map
+  for_each = var.worker_groups_map
   template = file("${path.module}/templates/userdata.sh.tpl")
 
   vars = {
