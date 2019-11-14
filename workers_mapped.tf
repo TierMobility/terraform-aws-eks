@@ -333,6 +333,33 @@ resource "aws_iam_role_policy_attachment" "worker_role_attach_AmazonSSMManagedIn
   role       = aws_iam_role.workers_mapped[0].name
 }
 
+resource "aws_iam_role_policy_attachment" "worker_ssm_logs" {
+  role       = aws_iam_role.workers_mapped[0].name
+  policy_arn = aws_iam_policy.worker_ssm_logs.arn
+}
+resource "aws_iam_policy" "worker_ssm_logs" {
+  name_prefix = "eks-worker-logging-${var.cluster_config.cluster_name}-cluster"
+  description = "EKS worker nodes SSM Agent logging ${var.cluster_config.cluster_name}"
+  policy      = data.aws_iam_policy_document.worker_ssm_logs.json
+}
+
+data "aws_iam_policy_document" "worker_ssm_logs" {
+  statement {
+    sid    = "ssmAgentLogging"
+    effect = "Allow"
+
+    actions = [
+      "logs:CreateLogStream",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents",
+      "logs:GetLogEvents",
+      "logs:CreateLogGroup"
+    ]
+
+    resources = ["arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ssm/agents:*"]
+  }
+}
+
 resource "aws_iam_role_policy_attachment" "workers_additional_policies_mapped" {
   count      = var.manage_worker_iam_resources ? length(var.workers_additional_policies) : 0
   role       = aws_iam_role.workers_mapped[0].name
