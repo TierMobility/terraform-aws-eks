@@ -338,8 +338,8 @@ resource "aws_iam_role_policy_attachment" "worker_ssm_logs" {
   policy_arn = aws_iam_policy.worker_ssm_logs.arn
 }
 resource "aws_iam_policy" "worker_ssm_logs" {
-  name_prefix = "eks-worker-logging-${var.cluster_config.cluster_name}-cluster"
-  description = "EKS worker nodes SSM Agent logging ${var.cluster_config.cluster_name}"
+  name_prefix = "eks-worker-logging-${aws_eks_cluster.this.name}-cluster"
+  description = "EKS worker nodes SSM Agent logging ${aws_eks_cluster.this.name}"
   policy      = data.aws_iam_policy_document.worker_ssm_logs.json
 }
 
