@@ -120,7 +120,7 @@ resource "aws_autoscaling_group" "workers_mapped" {
 
 
 resource "aws_launch_configuration" "workers_mapped" {
-  for_each = var.worker_groups_map
+  for_each    = var.worker_groups_map
   name_prefix = "${aws_eks_cluster.this.name}-${var.worker_groups_map[each.key].name}-"
   associate_public_ip_address = lookup(
     each.value,
@@ -142,8 +142,8 @@ resource "aws_launch_configuration" "workers_mapped" {
   ])[0]
   # the ami_id passed in from the calling stack is (in our case) emtpy, sop we have to strip that empty string out with compact()
   image_id = compact(
-    [ lookup( each.value, "ami_id", "" ),
-      local.workers_group_defaults["ami_id"] ]
+    [lookup(each.value, "ami_id", ""),
+    local.workers_group_defaults["ami_id"]]
   )[0]
   instance_type = lookup(
     each.value,
@@ -202,10 +202,10 @@ resource "aws_launch_configuration" "workers_mapped" {
       local.workers_group_defaults["root_iops"],
     )
     encrypted = lookup(
-        each.value,
-        "root_encrypted",
-        local.workers_group_defaults["root_encrypted"],
-      )
+      each.value,
+      "root_encrypted",
+      local.workers_group_defaults["root_encrypted"],
+    )
     delete_on_termination = true
   }
 
@@ -352,11 +352,24 @@ data "aws_iam_policy_document" "worker_ssm_logs" {
       "logs:CreateLogStream",
       "logs:DescribeLogStreams",
       "logs:PutLogEvents",
-      "logs:GetLogEvents",
-      "logs:CreateLogGroup"
+      "logs:GetLogEvents"
     ]
 
-    resources = ["arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ssm/agents:*"]
+    resources = [
+      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ssm/agents:*",
+      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ssm/sessions:*"]
+  }
+  statement {
+    sid    = "ssmAgentLoggroups"
+    effect = "Allow"
+
+    actions = [
+      "logs:DescribeLogGroups"
+    ]
+
+    resources = [
+      "arn:aws:logs:*:*:*"
+    ]
   }
 }
 
