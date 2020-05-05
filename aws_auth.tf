@@ -96,11 +96,13 @@ data "template_file" "config_map_aws_auth" {
   vars = {
     worker_role_arn = join(
       "",
-      distinct(
-        concat(          
-          data.template_file.worker_role_arns.*.rendered,
-          data.template_file.workers_mapped_role_arns.*.rendered,
-          data.template_file.launch_template_worker_role_arns.*.rendered,
+      reverse(
+        distinct(
+          concat(          
+            data.template_file.worker_role_arns.*.rendered,
+            data.template_file.workers_mapped_role_arns.*.rendered,
+            data.template_file.launch_template_worker_role_arns.*.rendered,
+          ),
         ),
       ),
     )
