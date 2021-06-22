@@ -16,9 +16,9 @@ locals {
   default_iam_role_id = aws_iam_role.workers_mapped[0].id
   kubeconfig_name     = var.kubeconfig_name == "" ? "eks_${var.cluster_name}" : var.kubeconfig_name
 
-  worker_group_count                       = length(var.worker_groups)
-  worker_group_mapped_count                = length(var.worker_groups_map)
-  worker_group_launch_template_count       = length(var.worker_groups_launch_template)
+  worker_group_count                 = length(var.worker_groups)
+  worker_group_mapped_count          = length(var.worker_groups_map)
+  worker_group_launch_template_count = length(var.worker_groups_launch_template)
 
   workers_group_defaults_defaults = {
     name                          = "count.index"               # Name of the worker group. Literal count.index will never be used but if name is not set, the count.index interpolation will be used.

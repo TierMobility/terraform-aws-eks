@@ -117,37 +117,6 @@ data "template_file" "userdata" {
   }
 }
 
-data "template_file" "userdata_mapped" {
-  for_each = var.worker_groups_map
-  template = file("${path.module}/templates/userdata.sh.tpl")
-
-  vars = {
-    cluster_name        = aws_eks_cluster.this.name
-    endpoint            = aws_eks_cluster.this.endpoint
-    cluster_auth_base64 = aws_eks_cluster.this.certificate_authority[0].data
-    pre_userdata = lookup(
-      each.value,
-      "pre_userdata",
-      local.workers_group_defaults["pre_userdata"],
-    )
-    additional_userdata = lookup(
-      each.value,
-      "additional_userdata",
-      local.workers_group_defaults["additional_userdata"],
-    )
-    bootstrap_extra_args = lookup(
-      each.value,
-      "bootstrap_extra_args",
-      local.workers_group_defaults["bootstrap_extra_args"],
-    )
-    kubelet_extra_args = lookup(
-      each.value,
-      "kubelet_extra_args",
-      local.workers_group_defaults["kubelet_extra_args"],
-    )
-  }
-}
-
 data "template_file" "launch_template_userdata" {
   count    = local.worker_group_launch_template_count
   template = file("${path.module}/templates/userdata.sh.tpl")
