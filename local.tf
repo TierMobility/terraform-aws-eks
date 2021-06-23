@@ -290,6 +290,33 @@ locals {
     }
     )
   ]
+
+  userdata_rendered = [for index in range(local.worker_group_count) : templatefile("${path.module}/templates/userdata.sh.tpl",
+    {
+      cluster_name        = aws_eks_cluster.this.name
+      endpoint            = aws_eks_cluster.this.endpoint
+      cluster_auth_base64 = aws_eks_cluster.this.certificate_authority[0].data
+      pre_userdata = lookup(
+        var.worker_groups[index],
+        "pre_userdata",
+        local.workers_group_defaults["pre_userdata"],
+      )
+      additional_userdata = lookup(
+        var.worker_groups[index],
+        "additional_userdata",
+        local.workers_group_defaults["additional_userdata"],
+      )
+      bootstrap_extra_args = lookup(
+        var.worker_groups[index],
+        "bootstrap_extra_args",
+        local.workers_group_defaults["bootstrap_extra_args"],
+      )
+      kubelet_extra_args = lookup(
+        var.worker_groups[index],
+        "kubelet_extra_args",
+        local.workers_group_defaults["kubelet_extra_args"],
+      )
+  })]
   # for the aws-auth configmap, we need the generated or passed in roles to be added.
   # the below sets up a template with the following logic:
   # -> create a template for each entry in the worker_group_map
