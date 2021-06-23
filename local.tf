@@ -16,9 +16,11 @@ locals {
   default_iam_role_id = aws_iam_role.workers_mapped[0].id
   kubeconfig_name     = var.kubeconfig_name == "" ? "eks_${var.cluster_name}" : var.kubeconfig_name
 
-  worker_group_count                       = length(var.worker_groups)
-  worker_group_mapped_count                = length(var.worker_groups_map)
-  worker_group_launch_template_count       = length(var.worker_groups_launch_template)
+  worker_group_count                 = length(var.worker_groups)
+  worker_group_mapped_count          = length(var.worker_groups_map)
+  worker_group_launch_template_count = length(var.worker_groups_launch_template)
+
+  aws_eks_cluster_name = aws_eks_cluster.this.name
 
   workers_group_defaults_defaults = {
     name                          = "count.index"               # Name of the worker group. Literal count.index will never be used but if name is not set, the count.index interpolation will be used.
@@ -232,4 +234,120 @@ locals {
     "x1e.16xlarge" = true
     "x1e.32xlarge" = true
   }
+
+  kubeconfig = templatefile("${path.module}/templates/kubeconfig.tpl", {
+    kubeconfig_name           = local.kubeconfig_name
+    endpoint                  = aws_eks_cluster.this.endpoint
+    region                    = data.aws_region.current.name
+    cluster_auth_base64       = aws_eks_cluster.this.certificate_authority[0].data
+    aws_authenticator_command = var.kubeconfig_aws_authenticator_command
+    aws_authenticator_command_args = length(var.kubeconfig_aws_authenticator_command_args) > 0 ? "        - ${join(
+      "\n        - ",
+      var.kubeconfig_aws_authenticator_command_args,
+      )}" : "        - ${join(
+      "\n        - ",
+      formatlist("\"%s\"", ["token", "-i", aws_eks_cluster.this.name]),
+    )}"
+    aws_authenticator_additional_args = length(var.kubeconfig_aws_authenticator_additional_args) > 0 ? "        - ${join(
+      "\n        - ",
+      var.kubeconfig_aws_authenticator_additional_args,
+    )}" : ""
+    aws_authenticator_env_variables = length(var.kubeconfig_aws_authenticator_env_variables) > 0 ? "      env:\n${join(
+      "\n",
+      data.template_file.aws_authenticator_env_variables.*.rendered,
+    )}" : ""
+  })
+  config_map_aws_auth = templatefile("${path.module}/templates/config-map-aws-auth.yaml.tpl", {
+    worker_role_arn = join(
+      "",
+      reverse(
+        distinct(
+          concat(
+            data.template_file.worker_role_arns.*.rendered,
+            local.workers_mapped_role_arns,
+            data.template_file.launch_template_worker_role_arns.*.rendered,
+          ),
+        ),
+      ),
+    )
+    map_users    = yamlencode(var.map_users),
+    map_roles    = yamlencode(var.map_roles),
+    map_accounts = yamlencode(var.map_accounts)
+    }
+  )
+
+  workers_mapped_role_arns = [for index in range(local.worker_group_mapped_count > 0 ? local.worker_group_mapped_count : 0) : templatefile("${path.module}/templates/worker_mapped-role.tpl",
+    {
+      arn_skeleton = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role"
+      worker_role_name = compact([
+        lookup(
+          var.worker_groups_map[keys(var.worker_groups_map)[index]],
+          "iam_role_id",
+          local.default_iam_role_id
+        ),
+        aws_iam_instance_profile.workers_mapped[keys(var.worker_groups_map)[index]].role,
+      ])[0]
+    }
+    )
+  ]
+
+  userdata_rendered = [for index in range(local.worker_group_count) : templatefile("${path.module}/templates/userdata.sh.tpl",
+    {
+      cluster_name        = aws_eks_cluster.this.name
+      endpoint            = aws_eks_cluster.this.endpoint
+      cluster_auth_base64 = aws_eks_cluster.this.certificate_authority[0].data
+      pre_userdata = lookup(
+        var.worker_groups[index],
+        "pre_userdata",
+        local.workers_group_defaults["pre_userdata"],
+      )
+      additional_userdata = lookup(
+        var.worker_groups[index],
+        "additional_userdata",
+        local.workers_group_defaults["additional_userdata"],
+      )
+      bootstrap_extra_args = lookup(
+        var.worker_groups[index],
+        "bootstrap_extra_args",
+        local.workers_group_defaults["bootstrap_extra_args"],
+      )
+      kubelet_extra_args = lookup(
+        var.worker_groups[index],
+        "kubelet_extra_args",
+        local.workers_group_defaults["kubelet_extra_args"],
+      )
+  })]
+  # for the aws-auth configmap, we need the generated or passed in roles to be added.
+  # the below sets up a template with the following logic:
+  # -> create a template for each entry in the worker_group_map
+  # -> check if there was a provided role name or a global provided role name
+  # -> check if there was a role created internally
+  # -> to do these checks, we have to use lookups() via keys() as we are mixing count and maps
+
+  launch_template_userdata = [for index in range(local.worker_group_launch_template_count) : templatefile("${path.module}/templates/userdata.sh.tpl",
+    {
+      cluster_name        = aws_eks_cluster.this.name
+      endpoint            = aws_eks_cluster.this.endpoint
+      cluster_auth_base64 = aws_eks_cluster.this.certificate_authority[0].data
+      pre_userdata = lookup(
+        var.worker_groups_launch_template[index],
+        "pre_userdata",
+        local.workers_group_defaults["pre_userdata"],
+      )
+      additional_userdata = lookup(
+        var.worker_groups_launch_template[index],
+        "additional_userdata",
+        local.workers_group_defaults["additional_userdata"],
+      )
+      bootstrap_extra_args = lookup(
+        var.worker_groups_launch_template[index],
+        "bootstrap_extra_args",
+        local.workers_group_defaults["bootstrap_extra_args"],
+      )
+      kubelet_extra_args = lookup(
+        var.worker_groups_launch_template[index],
+        "kubelet_extra_args",
+        local.workers_group_defaults["kubelet_extra_args"],
+      )
+  })]
 }

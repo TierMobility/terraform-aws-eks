@@ -155,7 +155,35 @@ resource "aws_launch_configuration" "workers_mapped" {
     "key_name",
     local.workers_group_defaults["key_name"],
   )
-  user_data_base64 = base64encode(data.template_file.userdata_mapped[each.key].rendered)
+
+  user_data_base64 = base64encode(templatefile("${path.module}/templates/userdata.sh.tpl",
+    {
+      cluster_name        = aws_eks_cluster.this.name
+      endpoint            = aws_eks_cluster.this.endpoint
+      cluster_auth_base64 = aws_eks_cluster.this.certificate_authority[0].data
+      pre_userdata = lookup(
+        each.value,
+        "pre_userdata",
+        local.workers_group_defaults["pre_userdata"],
+      )
+      additional_userdata = lookup(
+        each.value,
+        "additional_userdata",
+        local.workers_group_defaults["additional_userdata"],
+      )
+      bootstrap_extra_args = lookup(
+        each.value,
+        "bootstrap_extra_args",
+        local.workers_group_defaults["bootstrap_extra_args"],
+      )
+      kubelet_extra_args = lookup(
+        each.value,
+        "kubelet_extra_args",
+        local.workers_group_defaults["kubelet_extra_args"],
+      )
+    }
+    )
+  )
   ebs_optimized = lookup(
     each.value,
     "ebs_optimized",
@@ -357,7 +385,7 @@ data "aws_iam_policy_document" "worker_ssm_logs" {
 
     resources = [
       "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ssm/agents:*",
-      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ssm/sessions:*"]
+    "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/ssm/sessions:*"]
   }
   statement {
     sid    = "ssmAgentLoggroups"
@@ -433,7 +461,7 @@ data "aws_iam_policy_document" "worker_autoscaling_mapped" {
 
     condition {
       test     = "StringEquals"
-      variable = "autoscaling:ResourceTag/kubernetes.io/cluster/${aws_eks_cluster.this.name}"
+      variable = "autoscaling:ResourceTag/kubernetes.io/cluster/${local.aws_eks_cluster_name}"
       values   = ["owned"]
     }
 

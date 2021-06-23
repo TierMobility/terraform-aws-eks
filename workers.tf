@@ -178,7 +178,7 @@ resource "aws_launch_configuration" "workers" {
     "key_name",
     local.workers_group_defaults["key_name"],
   )
-  user_data_base64 = base64encode(data.template_file.userdata.*.rendered[count.index])
+  user_data_base64 = base64encode(local.userdata_rendered[count.index])
   ebs_optimized = lookup(
     var.worker_groups[count.index],
     "ebs_optimized",
@@ -225,7 +225,7 @@ resource "aws_launch_configuration" "workers" {
       local.workers_group_defaults["root_iops"],
     )
     delete_on_termination = true
-    encrypted = true
+    encrypted             = true
   }
 
   lifecycle {
@@ -404,7 +404,7 @@ data "aws_iam_policy_document" "worker_autoscaling" {
 
     condition {
       test     = "StringEquals"
-      variable = "autoscaling:ResourceTag/kubernetes.io/cluster/${aws_eks_cluster.this.name}"
+      variable = "autoscaling:ResourceTag/kubernetes.io/cluster/${local.aws_eks_cluster_name}"
       values   = ["owned"]
     }
 
