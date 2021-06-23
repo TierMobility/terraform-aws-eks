@@ -257,4 +257,22 @@ locals {
       data.template_file.aws_authenticator_env_variables.*.rendered,
     )}" : ""
   })
+  config_map_aws_auth = templatefile("${path.module}/templates/config-map-aws-auth.yaml.tpl", {
+    worker_role_arn = join(
+      "",
+      reverse(
+        distinct(
+          concat(
+            data.template_file.worker_role_arns.*.rendered,
+            data.template_file.workers_mapped_role_arns.*.rendered,
+            data.template_file.launch_template_worker_role_arns.*.rendered,
+          ),
+        ),
+      ),
+    )
+    map_users    = yamlencode(var.map_users),
+    map_roles    = yamlencode(var.map_roles),
+    map_accounts = yamlencode(var.map_accounts)
+    }
+  )
 }

@@ -1,6 +1,6 @@
 resource "local_file" "config_map_aws_auth" {
   count    = var.write_aws_auth_config ? 1 : 0
-  content  = data.template_file.config_map_aws_auth.rendered
+  content  = local.config_map_aws_auth
   filename = "${var.config_output_path}config-map-aws-auth_${var.cluster_name}.yaml"
 }
 
@@ -27,7 +27,7 @@ EOS
 
   triggers = {
     kube_config_map_rendered = local.kubeconfig
-    config_map_rendered      = data.template_file.config_map_aws_auth.rendered
+    config_map_rendered      = local.config_map_aws_auth
     endpoint                 = aws_eks_cluster.this.endpoint
   }
 }
@@ -87,27 +87,5 @@ data "template_file" "workers_mapped_role_arns" {
       ),
       aws_iam_instance_profile.workers_mapped[keys(var.worker_groups_map)[count.index]].role,
     ])[0]
-  }
-}
-
-data "template_file" "config_map_aws_auth" {
-  template = file("${path.module}/templates/config-map-aws-auth.yaml.tpl")
-
-  vars = {
-    worker_role_arn = join(
-      "",
-      reverse(
-        distinct(
-          concat(
-            data.template_file.worker_role_arns.*.rendered,
-            data.template_file.workers_mapped_role_arns.*.rendered,
-            data.template_file.launch_template_worker_role_arns.*.rendered,
-          ),
-        ),
-      ),
-    )
-    map_users    = yamlencode(var.map_users),
-    map_roles    = yamlencode(var.map_roles),
-    map_accounts = yamlencode(var.map_accounts)
   }
 }
