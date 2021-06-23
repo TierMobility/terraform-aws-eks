@@ -20,6 +20,8 @@ locals {
   worker_group_mapped_count          = length(var.worker_groups_map)
   worker_group_launch_template_count = length(var.worker_groups_launch_template)
 
+  aws_eks_cluster_name = aws_eks_cluster.this.name
+
   workers_group_defaults_defaults = {
     name                          = "count.index"               # Name of the worker group. Literal count.index will never be used but if name is not set, the count.index interpolation will be used.
     tags                          = []                          # A list of map defining extra tags to be applied to the worker group ASG.
@@ -232,4 +234,27 @@ locals {
     "x1e.16xlarge" = true
     "x1e.32xlarge" = true
   }
+
+  kubeconfig = templatefile("${path.module}/templates/kubeconfig.tpl", {
+    kubeconfig_name           = local.kubeconfig_name
+    endpoint                  = aws_eks_cluster.this.endpoint
+    region                    = data.aws_region.current.name
+    cluster_auth_base64       = aws_eks_cluster.this.certificate_authority[0].data
+    aws_authenticator_command = var.kubeconfig_aws_authenticator_command
+    aws_authenticator_command_args = length(var.kubeconfig_aws_authenticator_command_args) > 0 ? "        - ${join(
+      "\n        - ",
+      var.kubeconfig_aws_authenticator_command_args,
+      )}" : "        - ${join(
+      "\n        - ",
+      formatlist("\"%s\"", ["token", "-i", aws_eks_cluster.this.name]),
+    )}"
+    aws_authenticator_additional_args = length(var.kubeconfig_aws_authenticator_additional_args) > 0 ? "        - ${join(
+      "\n        - ",
+      var.kubeconfig_aws_authenticator_additional_args,
+    )}" : ""
+    aws_authenticator_env_variables = length(var.kubeconfig_aws_authenticator_env_variables) > 0 ? "      env:\n${join(
+      "\n",
+      data.template_file.aws_authenticator_env_variables.*.rendered,
+    )}" : ""
+  })
 }

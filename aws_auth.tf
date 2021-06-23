@@ -26,7 +26,7 @@ EOS
   }
 
   triggers = {
-    kube_config_map_rendered = data.template_file.kubeconfig.rendered
+    kube_config_map_rendered = local.kubeconfig
     config_map_rendered      = data.template_file.config_map_aws_auth.rendered
     endpoint                 = aws_eks_cluster.this.endpoint
   }

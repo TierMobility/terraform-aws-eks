@@ -55,7 +55,7 @@ output "cloudwatch_log_group_name" {
 
 output "kubeconfig" {
   description = "kubectl config file contents for this EKS cluster."
-  value       = data.template_file.kubeconfig.rendered
+  value       = local.kubeconfig
 }
 
 output "kubeconfig_filename" {
