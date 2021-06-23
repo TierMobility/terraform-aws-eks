@@ -323,4 +323,31 @@ locals {
   # -> check if there was a provided role name or a global provided role name
   # -> check if there was a role created internally
   # -> to do these checks, we have to use lookups() via keys() as we are mixing count and maps
+
+  launch_template_userdata = [for index in range(local.worker_group_launch_template_count) : templatefile("${path.module}/templates/userdata.sh.tpl",
+    {
+      cluster_name        = aws_eks_cluster.this.name
+      endpoint            = aws_eks_cluster.this.endpoint
+      cluster_auth_base64 = aws_eks_cluster.this.certificate_authority[0].data
+      pre_userdata = lookup(
+        var.worker_groups_launch_template[index],
+        "pre_userdata",
+        local.workers_group_defaults["pre_userdata"],
+      )
+      additional_userdata = lookup(
+        var.worker_groups_launch_template[index],
+        "additional_userdata",
+        local.workers_group_defaults["additional_userdata"],
+      )
+      bootstrap_extra_args = lookup(
+        var.worker_groups_launch_template[index],
+        "bootstrap_extra_args",
+        local.workers_group_defaults["bootstrap_extra_args"],
+      )
+      kubelet_extra_args = lookup(
+        var.worker_groups_launch_template[index],
+        "kubelet_extra_args",
+        local.workers_group_defaults["kubelet_extra_args"],
+      )
+  })]
 }
